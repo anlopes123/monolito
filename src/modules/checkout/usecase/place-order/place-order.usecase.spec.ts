@@ -3,6 +3,8 @@ import ProductAdmFacade from "../../../product-adm/facade/product.adm.facade";
 import { PlaceOrderInputDto } from "./place-order.dto"
 import PlaceOrderUseCase from "./place-order.usecase"
 
+const mockDate = new Date(200,1,1);
+
 describe("PlaceOrderUseCase unit test", ()=>{
 
     describe("validade product method" ,  () => {  
@@ -72,6 +74,31 @@ describe("PlaceOrderUseCase unit test", ()=>{
         });
 
     });
+
+    describe("getProducts methos", ()=> {
+        beforeAll(()=> {
+            jest.useFakeTimers("modern");
+            jest.setSystemTime(mockDate);
+        });
+        afterAll(()=>{
+            jest.useRealTimers();
+        });
+        //@ts-expect-error - no param in constructor
+        const placeOrderUseCase = new PlaceOrderUseCase();
+
+
+        it("should an error  when product not found",async () => {
+
+           const mockCatalogFacade = {
+             find: jest.fn().mockResolvedValue(null), 
+           } 
+
+           //@ts-expect-error - force set catalogFacade
+           placeOrderUseCase["_productFacade"] = mockCatalogFacade;
+
+           
+        });
+    })
 
     describe("execute method", ()=> {
         
