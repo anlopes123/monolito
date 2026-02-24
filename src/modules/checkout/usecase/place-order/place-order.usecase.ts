@@ -38,5 +38,6 @@ export default class PlaceOrderUseCase implements UseCaseInterface {
         }
 
     }
+    private async getProduct(productId: string) :
            
 }

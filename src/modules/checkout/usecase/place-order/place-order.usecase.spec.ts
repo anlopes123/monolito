@@ -95,8 +95,10 @@ describe("PlaceOrderUseCase unit test", ()=>{
 
            //@ts-expect-error - force set catalogFacade
            placeOrderUseCase["_productFacade"] = mockCatalogFacade;
-
-           
+           //@ts-expect-error 
+           await expect(placeOrderUseCase["getProduct"]("0")).rejects.toThrow(
+            new Error("Product not found")
+           );
         });
     })
 
