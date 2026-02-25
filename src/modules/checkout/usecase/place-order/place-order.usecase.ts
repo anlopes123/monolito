@@ -1,25 +1,48 @@
 import UseCaseInterface from "../../../@shared/domain/usecase/use-case.interface";
+import Id from "../../../@shared/domain/value-object/id.value-object";
 import ClientAdmFacadeInterface from "../../../client-adm/facade/cliente-adm.facade.interface";
 import ProductAdmFacadeInterface from "../../../product-adm/facade/product.adm.facade.interface";
+import StoreCatalogFacade from "../../../store-catalog/facade/store-catalog.facade";
+import Client from "../../domain/client.entity";
+import Order from "../../domain/order.entity";
+import Product from "../../domain/product.entity";
 import { PlaceOrderInputDto, PlaceOrderOutputDto } from "./place-order.dto";
 
 export default class PlaceOrderUseCase implements UseCaseInterface {
     
     private _clientFacade: ClientAdmFacadeInterface;
-    private _productFacade: ProductAdmFacadeInterface
-    constructor(clientFacade: ClientAdmFacadeInterface, productFacade: ProductAdmFacadeInterface) {
+    private _productFacade: ProductAdmFacadeInterface;
+    private _catalogFacade: StoreCatalogFacade;
+    constructor(clientFacade: ClientAdmFacadeInterface, productFacade: ProductAdmFacadeInterface,
+        catalogFacade: StoreCatalogFacade) {
         this._clientFacade = clientFacade;
         this._productFacade = productFacade;
+        this._catalogFacade = catalogFacade;
     }
     
     async execute(input: PlaceOrderInputDto): Promise<PlaceOrderOutputDto> {
-       const client = this._clientFacade.find({id: input.clientId});
+       const client = await this._clientFacade.find({id: input.clientId});
        if(!client) {
          throw Error("Client not found");
          
        }
 
        await this.validateProducts(input);
+       const products = await Promise.all(
+          input.products.map((p) =>this.getProduct(p.productId))
+       );
+       const myClient = new Client({
+         id: new Id(client.id),
+         name: client.name,
+         email: client.email,
+         address: client.address,
+       });
+
+       const order = new Order({
+         client: myClient,
+         products: products,
+         status: "pending"
+       });
 
        return null;
     }
@@ -38,6 +61,18 @@ export default class PlaceOrderUseCase implements UseCaseInterface {
         }
 
     }
-    private async getProduct(productId: string) :
+    private async getProduct(productId: string) : Promise<Product> {
+        const product = await this._catalogFacade.find({id: productId});
+        if(!product) {
+            throw Error("Product not found");
+        }
+        const productProps = {
+            id: new Id(product.id),
+            name: product.name,
+            description: product.description,
+            salesPrice: product.salesPrice,
+        };
+        return new Product(productProps);
+    }
            
 }
